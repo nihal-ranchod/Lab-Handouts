@@ -3,6 +3,8 @@
 ## Members
 - Lisa Godwin: 2437980
 - Nihal Ranchod: 2427378
+- Brendan Griffiths - 2426285
+- Konstantinos Hatzipanis - 2444096
 
 ### Lab 1: Dynamic Programming: [Lab 1 PDF](Lab_1-Handout.pdf)
 
