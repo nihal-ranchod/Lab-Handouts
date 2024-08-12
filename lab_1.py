@@ -1,9 +1,7 @@
 ###
 # Group Members
-# Name:Student Number
-# Name:Student Number
-# Name:Student Number
-# Name:Student Number
+# Nihal Ranchod - 2427378
+# Lisa Godwin - 2437980
 ###
 
 import numpy as np
@@ -30,8 +28,19 @@ def policy_evaluation(env, policy, discount_factor=1.0, theta=0.00001):
     Returns:
         Vector of length env.observation_space.n representing the value function.
     """
-    raise NotImplementedError
-
+    v = np.zeros(env.observation_space.n)
+    while True:
+        delta = 0
+        for s in range(env.observation_space.n):
+            v_s = 0
+            for a, action_prob in enumerate(policy[s]):
+                for prob, next_state, reward, done in env.P[s][a]:
+                    v_s += action_prob * prob * (reward + discount_factor * v[next_state])
+            delta = max(delta, np.abs(v[s] - v_s))
+            v[s] = v_s
+        if delta < theta:
+            break
+    return np.array(v)
 
 def policy_iteration(env, policy_evaluation_fn=policy_evaluation, discount_factor=1.0):
     """
@@ -110,14 +119,17 @@ def main():
     print("")
 
     # TODO: generate random policy
+    random_policy = np.ones([env.observation_space.n, env.action_space.n]) / env.action_space.n
 
     print("*" * 5 + " Policy evaluation " + "*" * 5)
     print("")
 
     # TODO: evaluate random policy
-    v = []
+    v = policy_evaluation(env, random_policy)
 
     # TODO: print state value for each state, as grid shape
+    V_grid = v.reshape(env.shape)
+    print(V_grid)
 
     # Test: Make sure the evaluated policy is what we expected
     expected_v = np.array([-106.81, -104.81, -101.37, -97.62, -95.07,
