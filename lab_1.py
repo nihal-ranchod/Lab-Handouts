@@ -108,28 +108,64 @@ def value_iteration(env, theta=0.0001, discount_factor=1.0):
 
     raise NotImplementedError
 
+def generate_random_trajectory(env, state):
+    trajectory = []
+    done = False
+
+    while not done:
+        action = env.action_space.sample()  # Select a random action
+        next_state, reward, done, _ = env.step(action)
+        if done:
+            break
+        trajectory.append((state, action))
+        state = next_state
+
+    return trajectory
+
+def print_trajectory(env, trajectory):
+    grid_trajectory = np.full(env.shape, 'o ')
+    for (state, action) in trajectory:
+        row, col = divmod(state, env.shape[1])
+        if action == 0:
+            grid_trajectory[row, col] = 'U '  
+        elif action == 1:
+            grid_trajectory[row, col] = 'R '  
+        elif action == 2:
+            grid_trajectory[row, col] = 'D '  
+        elif action == 3:
+            grid_trajectory[row, col] = 'L ' 
+
+    # Mark the terminal state with an 'T'
+    grid_trajectory[env.shape[0] - 1, env.shape[1] - 1] = 'T '
+
+    print("Trajectory:")
+    for row in grid_trajectory:
+        print(" ".join(row))
 
 def main():
     # Create Gridworld environment with size of 5 by 5, with the goal at state 24. Reward for getting to goal state is 0, and each step reward is -1
     env = GridworldEnv(shape=[5, 5], terminal_states=[
                        24], terminal_reward=0, step_reward=-1)
+    
     state = env.reset()
     print("")
     env.render()
     print("")
+    
+    # Exercise 1.1: Generating a trajectory with a uniform random policy
+    trajectory = generate_random_trajectory(env, state)
+    print(trajectory)
+    print()
+    print_trajectory(env, trajectory)
 
     # TODO: generate random policy
-    random_policy = np.ones([env.observation_space.n, env.action_space.n]) / env.action_space.n
 
     print("*" * 5 + " Policy evaluation " + "*" * 5)
     print("")
 
     # TODO: evaluate random policy
-    v = policy_evaluation(env, random_policy)
 
     # TODO: print state value for each state, as grid shape
-    V_grid = v.reshape(env.shape)
-    print(V_grid)
 
     # Test: Make sure the evaluated policy is what we expected
     expected_v = np.array([-106.81, -104.81, -101.37, -97.62, -95.07,
