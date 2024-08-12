@@ -2,6 +2,8 @@
 # Group Members
 # Nihal Ranchod - 2427378
 # Lisa Godwin - 2437980
+# Brendan Griffiths - 2426285
+# Konstantinos Hatzipanis - 2444096
 ###
 
 import numpy as np
