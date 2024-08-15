@@ -146,70 +146,87 @@ def print_trajectory(env, trajectory):
 
 def main():
     # Create Gridworld environment with size of 5 by 5, with the goal at state 24. Reward for getting to goal state is 0, and each step reward is -1
-    env = GridworldEnv(shape=[5, 5], terminal_states=[
-                       24], terminal_reward=0, step_reward=-1)
-    
+    env = GridworldEnv(shape=[5, 5], terminal_states=[24], terminal_reward=0, step_reward=-1)
     state = env.reset()
-    print("")
-    env.render()
-    print("")
+
+    # print("")
+    # env.render()
+    # print("")
     
     # Exercise 1.1: Generating a trajectory with a uniform random policy
-    trajectory = generate_random_trajectory(env, state)
-    print(trajectory)
-    print()
-    print_trajectory(env, trajectory)
+    # trajectory = generate_random_trajectory(env, state)
+    # print(trajectory)
+    # print()
+    # print_trajectory(env, trajectory)
 
-    # TODO: generate random policy
+    # Brendan:
+    ## What is a policy: A set of actions for each state
+    ## Therefore we can describe our policy as a function (2D array) that maps a state to some actions
+    ## Our list of actions is Up (0,-1), Down (0,1), Left (-1,0), Right (1,0)
+    ## 
+    ## A uniform random policy can be interpreted 1 of 2 ways:
+    ## 1. Each state has only one action, which is chosen at random via a uniform distribution
+    ##      * Every call of $\pi(s)$ will return the same action $a$
+    ##      * $\pi(s)$ has $a$ chosen at initialization time
+    ## 2. Each state has 4 action's, that can be chosen at random with a uniform distribution
+    ##      * Every call of $\pi(s)$ will return a random action $a$
+    ##      * Every call of $\pi(s)$ will choose a new action to return
+    ##
+    ## By def policy_evaluation:
+    ## for a, action_prob in enumerate(policy[s]):
+    ##
+    ## A policy is defined as a list of probabilites where the index is the action
+    ## So [1., 0., 0., 0.] is a policy for a state that has a 100% chance of picking the UP action
+    ## [0.25, 0.25, 0.25, 0.25] is a policy for a state that has an equal chance of picking any action
+
+    random_policy = (np.ones((*env.shape, env.action_space.n), dtype=np.uint32) / env.action_space.n).reshape(-1,4)
+    print(random_policy)
 
     print("*" * 5 + " Policy evaluation " + "*" * 5)
     print("")
 
-    # TODO: evaluate random policy
-
-    # TODO: print state value for each state, as grid shape
-
-    # Test: Make sure the evaluated policy is what we expected
+    random_v = policy_evaluation(env=env, policy=random_policy)
+    print(random_v)
     expected_v = np.array([-106.81, -104.81, -101.37, -97.62, -95.07,
                            -104.81, -102.25, -97.69, -92.40, -88.52,
                            -101.37, -97.69, -90.74, -81.78, -74.10,
                            -97.62, -92.40, -81.78, -65.89, -47.99,
                            -95.07, -88.52, -74.10, -47.99, 0.0])
-    np.testing.assert_array_almost_equal(v, expected_v, decimal=2)
+    np.testing.assert_array_almost_equal(random_v, expected_v, decimal=2)
 
-    print("*" * 5 + " Policy iteration " + "*" * 5)
-    print("")
-    # TODO: use  policy improvement to compute optimal policy and state values
-    policy, v = [], []  # call policy_iteration
-
-    # TODO Print out best action for each state in grid shape
-
-    # TODO: print state value for each state, as grid shape
-
-    # Test: Make sure the value function is what we expected
-    expected_v = np.array([-8., -7., -6., -5., -4.,
-                           -7., -6., -5., -4., -3.,
-                           -6., -5., -4., -3., -2.,
-                           -5., -4., -3., -2., -1.,
-                           -4., -3., -2., -1., 0.])
-    np.testing.assert_array_almost_equal(v, expected_v, decimal=1)
-
-    print("*" * 5 + " Value iteration " + "*" * 5)
-    print("")
-    # TODO: use  value iteration to compute optimal policy and state values
-    policy, v = [], []  # call value_iteration
-
-    # TODO Print out best action for each state in grid shape
-
-    # TODO: print state value for each state, as grid shape
-
-    # Test: Make sure the value function is what we expected
-    expected_v = np.array([-8., -7., -6., -5., -4.,
-                           -7., -6., -5., -4., -3.,
-                           -6., -5., -4., -3., -2.,
-                           -5., -4., -3., -2., -1.,
-                           -4., -3., -2., -1., 0.])
-    np.testing.assert_array_almost_equal(v, expected_v, decimal=1)
+    # print("*" * 5 + " Policy iteration " + "*" * 5)
+    # print("")
+    # # TODO: use  policy improvement to compute optimal policy and state values
+    # policy, v = [], []  # call policy_iteration
+    #
+    # # TODO Print out best action for each state in grid shape
+    #
+    # # TODO: print state value for each state, as grid shape
+    #
+    # # Test: Make sure the value function is what we expected
+    # expected_v = np.array([-8., -7., -6., -5., -4.,
+    #                        -7., -6., -5., -4., -3.,
+    #                        -6., -5., -4., -3., -2.,
+    #                        -5., -4., -3., -2., -1.,
+    #                        -4., -3., -2., -1., 0.])
+    # np.testing.assert_array_almost_equal(v, expected_v, decimal=1)
+    #
+    # print("*" * 5 + " Value iteration " + "*" * 5)
+    # print("")
+    # # TODO: use  value iteration to compute optimal policy and state values
+    # policy, v = [], []  # call value_iteration
+    #
+    # # TODO Print out best action for each state in grid shape
+    #
+    # # TODO: print state value for each state, as grid shape
+    #
+    # # Test: Make sure the value function is what we expected
+    # expected_v = np.array([-8., -7., -6., -5., -4.,
+    #                        -7., -6., -5., -4., -3.,
+    #                        -6., -5., -4., -3., -2.,
+    #                        -5., -4., -3., -2., -1.,
+    #                        -4., -3., -2., -1., 0.])
+    # np.testing.assert_array_almost_equal(v, expected_v, decimal=1)
 
 
 if __name__ == "__main__":
