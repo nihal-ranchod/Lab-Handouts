@@ -110,12 +110,12 @@ def value_iteration(env, theta=0.0001, discount_factor=1.0):
 
     raise NotImplementedError
 
-def generate_random_trajectory(env, state):
+def generate_random_trajectory(env, policy, state):
     trajectory = []
     done = False
 
     while not done:
-        action = env.action_space.sample()  # Select a random action
+        action = np.random.choice(range(0,4), 1, p=policy[state])[0]
         next_state, reward, done, _ = env.step(action)
         if done:
             break
@@ -149,16 +149,6 @@ def main():
     env = GridworldEnv(shape=[5, 5], terminal_states=[24], terminal_reward=0, step_reward=-1)
     state = env.reset()
 
-    # print("")
-    # env.render()
-    # print("")
-    
-    # Exercise 1.1: Generating a trajectory with a uniform random policy
-    # trajectory = generate_random_trajectory(env, state)
-    # print(trajectory)
-    # print()
-    # print_trajectory(env, trajectory)
-
     # Brendan:
     ## What is a policy: A set of actions for each state
     ## Therefore we can describe our policy as a function (2D array) that maps a state to some actions
@@ -179,14 +169,21 @@ def main():
     ## So [1., 0., 0., 0.] is a policy for a state that has a 100% chance of picking the UP action
     ## [0.25, 0.25, 0.25, 0.25] is a policy for a state that has an equal chance of picking any action
 
+    env.render()
+    print("")
+
+    # Exercise 1.1: Generating a trajectory with a uniform random policy
     random_policy = (np.ones((*env.shape, env.action_space.n), dtype=np.uint32) / env.action_space.n).reshape(-1,4)
-    print(random_policy)
+
+    trajectory = generate_random_trajectory(env, random_policy, state)
+    print_trajectory(env, trajectory)
+    print("")
+
 
     print("*" * 5 + " Policy evaluation " + "*" * 5)
     print("")
 
     random_v = policy_evaluation(env=env, policy=random_policy)
-    print(random_v)
     expected_v = np.array([-106.81, -104.81, -101.37, -97.62, -95.07,
                            -104.81, -102.25, -97.69, -92.40, -88.52,
                            -101.37, -97.69, -90.74, -81.78, -74.10,
