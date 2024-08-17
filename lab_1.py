@@ -73,9 +73,29 @@ def policy_iteration(env, policy_evaluation_fn=policy_evaluation, discount_facto
         Returns:
             A vector of length env.action_space.n containing the expected value of each action.
         """
-        raise NotImplementedError
+        expected_action_values = np.zeros(env.action_space.n)
+        for a in range(env.action_space.n):
+            for prob, next_state, reward, _ in env.P[s][a]:
+                expected_action_values[a] += prob * (reward + discount_factor * V[next_state])
 
-    raise NotImplementedError
+        return expected_action_values
+
+    current_policy = (np.ones((*env.shape, env.action_space.n), dtype=np.uint32) / env.action_space.n).reshape(-1,4)
+
+    policy_stable = False 
+    while not policy_stable:
+        current_value = policy_evaluation_fn(env, current_policy, discount_factor)
+        old_policy = np.copy(current_policy)
+        for s in range(env.observation_space.n):
+            action_value = one_step_lookahead(s, current_value)
+            new_action_probs = np.zeros(env.action_space.n)
+            new_action_probs[np.argmax(action_value)] = 1.0
+            current_policy[s] = new_action_probs
+        policy_stable = (old_policy == current_policy).any()
+            
+    return (current_policy, current_value)
+
+
 
 
 def value_iteration(env, theta=0.0001, discount_factor=1.0):
@@ -123,6 +143,25 @@ def generate_random_trajectory(env, policy, state):
         state = next_state
 
     return trajectory
+
+def print_policy(env, policy):
+    printed_policy = np.full(env.shape, 'o')
+    for s in range(env.observation_space.n):
+        row, col = divmod(s, env.shape[1])
+        action = np.argmax(policy[s])
+        if action == 0:
+            printed_policy[row, col] = 'U'  
+        elif action == 1:
+            printed_policy[row, col] = 'R'  
+        elif action == 2:
+            printed_policy[row, col] = 'D'  
+        elif action == 3:
+            printed_policy[row, col] = 'L' 
+
+    printed_policy[env.shape[0] - 1, env.shape[1] - 1] = 'T '
+    for row in printed_policy:
+        print("  ".join(row))
+
 
 def print_trajectory(env, trajectory):
     grid_trajectory = np.full(env.shape, 'o ')
@@ -184,6 +223,8 @@ def main():
     print("")
 
     random_v = policy_evaluation(env=env, policy=random_policy)
+    print("Random Policy Value Function")
+    print(random_v)
     expected_v = np.array([-106.81, -104.81, -101.37, -97.62, -95.07,
                            -104.81, -102.25, -97.69, -92.40, -88.52,
                            -101.37, -97.69, -90.74, -81.78, -74.10,
@@ -191,22 +232,17 @@ def main():
                            -95.07, -88.52, -74.10, -47.99, 0.0])
     np.testing.assert_array_almost_equal(random_v, expected_v, decimal=2)
 
-    # print("*" * 5 + " Policy iteration " + "*" * 5)
-    # print("")
-    # # TODO: use  policy improvement to compute optimal policy and state values
-    # policy, v = [], []  # call policy_iteration
-    #
-    # # TODO Print out best action for each state in grid shape
-    #
-    # # TODO: print state value for each state, as grid shape
-    #
-    # # Test: Make sure the value function is what we expected
-    # expected_v = np.array([-8., -7., -6., -5., -4.,
-    #                        -7., -6., -5., -4., -3.,
-    #                        -6., -5., -4., -3., -2.,
-    #                        -5., -4., -3., -2., -1.,
-    #                        -4., -3., -2., -1., 0.])
-    # np.testing.assert_array_almost_equal(v, expected_v, decimal=1)
+    print("*" * 5 + " Policy iteration " + "*" * 5)
+    print("")
+
+    policy, v = policy_iteration(env)
+    print_policy(env, policy)
+    expected_v = np.array([-8., -7., -6., -5., -4.,
+                           -7., -6., -5., -4., -3.,
+                           -6., -5., -4., -3., -2.,
+                           -5., -4., -3., -2., -1.,
+                           -4., -3., -2., -1., 0.])
+    np.testing.assert_array_almost_equal(v, expected_v, decimal=1)
     #
     # print("*" * 5 + " Value iteration " + "*" * 5)
     # print("")
