@@ -126,9 +126,28 @@ def value_iteration(env, theta=0.0001, discount_factor=1.0):
         Returns:
             A vector of length env.action_space.n containing the expected value of each action.
         """
-        raise NotImplementedError
+        expected_action_values = np.zeros(env.action_space.n)
+        for a in range(env.action_space.n):
+            for prob, next_state, reward, _ in env.P[s][a]:
+                expected_action_values[a] += prob * (reward + discount_factor * V[next_state])
 
-    raise NotImplementedError
+        return expected_action_values
+
+    v = np.zeros(env.observation_space.n)
+    while True:
+        delta = 0
+        for s in range(env.observation_space.n):
+            v_s = np.max(one_step_lookahead(s, v))
+            delta = max(delta, np.abs(v[s] - v_s))
+            v[s] = v_s
+        if delta < theta:
+            break
+
+    policy = np.zeros((env.observation_space.n, 4))
+    for s in range(env.observation_space.n):
+        expected_action_values = one_step_lookahead(s, v)
+        policy[s][np.argmax(expected_action_values)] = 1.0
+    return policy, v
 
 def generate_random_trajectory(env, policy, state):
     trajectory = []
@@ -136,12 +155,23 @@ def generate_random_trajectory(env, policy, state):
 
     while not done:
         action = np.random.choice(range(0,4), 1, p=policy[state])[0]
-        next_state, reward, done, _ = env.step(action)
-        if done:
-            break
         trajectory.append((state, action))
+        _, next_state, _, done = env.P[state][action][0]
         state = next_state
 
+    return trajectory
+
+def generate_trajectory(env, policy, state: int):
+    trajectory: list[tuple[int, int]] = []
+    done = False
+
+    while not done:
+        action: int = np.argmax(policy[state])
+        trajectory.append((state, action))
+        _, next_state, _, done = env.P[state][action][0]
+        state = next_state
+
+    # print("")
     return trajectory
 
 def print_policy(env, policy):
@@ -158,35 +188,33 @@ def print_policy(env, policy):
         elif action == 3:
             printed_policy[row, col] = 'L' 
 
-    printed_policy[env.shape[0] - 1, env.shape[1] - 1] = 'T '
+    printed_policy[env.shape[0] - 1, env.shape[1] - 1] = 'T'
     for row in printed_policy:
         print("  ".join(row))
 
 
 def print_trajectory(env, trajectory):
-    grid_trajectory = np.full(env.shape, 'o ')
+    grid_trajectory = np.full(env.shape, 'o')
     for (state, action) in trajectory:
         row, col = divmod(state, env.shape[1])
         if action == 0:
-            grid_trajectory[row, col] = 'U '  
+            grid_trajectory[row, col] = 'U'  
         elif action == 1:
-            grid_trajectory[row, col] = 'R '  
+            grid_trajectory[row, col] = 'R'  
         elif action == 2:
-            grid_trajectory[row, col] = 'D '  
+            grid_trajectory[row, col] = 'D'  
         elif action == 3:
-            grid_trajectory[row, col] = 'L ' 
+            grid_trajectory[row, col] = 'L' 
 
     # Mark the terminal state with an 'T'
-    grid_trajectory[env.shape[0] - 1, env.shape[1] - 1] = 'T '
-
-    print("Trajectory:")
+    grid_trajectory[env.shape[0] - 1, env.shape[1] - 1] = 'T'
     for row in grid_trajectory:
-        print(" ".join(row))
+        print("  ".join(row))
 
 def main():
     # Create Gridworld environment with size of 5 by 5, with the goal at state 24. Reward for getting to goal state is 0, and each step reward is -1
     env = GridworldEnv(shape=[5, 5], terminal_states=[24], terminal_reward=0, step_reward=-1)
-    state = env.reset()
+    initial_state = env.reset()
 
     # Brendan:
     ## What is a policy: A set of actions for each state
@@ -214,11 +242,11 @@ def main():
     # Exercise 1.1: Generating a trajectory with a uniform random policy
     random_policy = (np.ones((*env.shape, env.action_space.n), dtype=np.uint32) / env.action_space.n).reshape(-1,4)
 
-    trajectory = generate_random_trajectory(env, random_policy, state)
+    trajectory = generate_random_trajectory(env, random_policy, initial_state)
     print_trajectory(env, trajectory)
+
     print("")
-
-
+    print("")
     print("*" * 5 + " Policy evaluation " + "*" * 5)
     print("")
 
@@ -232,34 +260,43 @@ def main():
                            -95.07, -88.52, -74.10, -47.99, 0.0])
     np.testing.assert_array_almost_equal(random_v, expected_v, decimal=2)
 
+    print("")
+    print("")
     print("*" * 5 + " Policy iteration " + "*" * 5)
     print("")
 
     policy, v = policy_iteration(env)
+    print("Policy Iteration Policy")
     print_policy(env, policy)
+    print("Policy Iteration Value Function")
+    print(v.reshape(env.shape))
+    print("Policy Iteration Trajectory")
+    print_trajectory(env, generate_trajectory(env, policy, initial_state))
     expected_v = np.array([-8., -7., -6., -5., -4.,
                            -7., -6., -5., -4., -3.,
                            -6., -5., -4., -3., -2.,
                            -5., -4., -3., -2., -1.,
                            -4., -3., -2., -1., 0.])
     np.testing.assert_array_almost_equal(v, expected_v, decimal=1)
-    #
-    # print("*" * 5 + " Value iteration " + "*" * 5)
-    # print("")
-    # # TODO: use  value iteration to compute optimal policy and state values
-    # policy, v = [], []  # call value_iteration
-    #
-    # # TODO Print out best action for each state in grid shape
-    #
-    # # TODO: print state value for each state, as grid shape
-    #
-    # # Test: Make sure the value function is what we expected
-    # expected_v = np.array([-8., -7., -6., -5., -4.,
-    #                        -7., -6., -5., -4., -3.,
-    #                        -6., -5., -4., -3., -2.,
-    #                        -5., -4., -3., -2., -1.,
-    #                        -4., -3., -2., -1., 0.])
-    # np.testing.assert_array_almost_equal(v, expected_v, decimal=1)
+
+    print("")
+    print("")
+    print("*" * 5 + " Value iteration " + "*" * 5)
+    print("")
+
+    policy, v = value_iteration(env)
+    print("Value Iteration Policy")
+    print_policy(env, policy)
+    print("Value Iteration Value Function")
+    print(v.reshape(env.shape))
+    print("Value Iteration Trajectory")
+    print_trajectory(env, generate_trajectory(env, policy, initial_state))
+    expected_v = np.array([-8., -7., -6., -5., -4.,
+                           -7., -6., -5., -4., -3.,
+                           -6., -5., -4., -3., -2.,
+                           -5., -4., -3., -2., -1.,
+                           -4., -3., -2., -1., 0.])
+    np.testing.assert_array_almost_equal(v, expected_v, decimal=1)
 
 
 if __name__ == "__main__":
