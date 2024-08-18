@@ -173,7 +173,6 @@ def generate_trajectory(env, policy, state: int):
         _, next_state, _, done = env.P[state][action][0]
         state = next_state
 
-    # print("")
     return trajectory
 
 def print_policy(env, policy):
@@ -243,10 +242,10 @@ def main():
 
     # Exercise 1.1: Generating a trajectory with a uniform random policy
     random_policy = (np.ones((*env.shape, env.action_space.n), dtype=np.uint32) / env.action_space.n).reshape(-1,4)
-
     trajectory = generate_random_trajectory(env, random_policy, initial_state)
     print_trajectory(env, trajectory)
 
+    # Excercise 2.1
     print("")
     print("")
     print("*" * 5 + " Policy evaluation " + "*" * 5)
@@ -262,6 +261,7 @@ def main():
                            -95.07, -88.52, -74.10, -47.99, 0.0])
     np.testing.assert_array_almost_equal(random_v, expected_v, decimal=2)
 
+    # Excercise 3.1
     print("")
     print("")
     print("*" * 5 + " Policy iteration " + "*" * 5)
@@ -281,6 +281,7 @@ def main():
                            -4., -3., -2., -1., 0.])
     np.testing.assert_array_almost_equal(v, expected_v, decimal=1)
 
+    # Excercise 4.1.1
     print("")
     print("")
     print("*" * 5 + " Value iteration " + "*" * 5)
@@ -301,14 +302,16 @@ def main():
     np.testing.assert_array_almost_equal(v, expected_v, decimal=1)
 
 
-    ## Graph Nonsense
+    # Excercise 4.1.2
     print("")
     print("")
     print("*" * 5 + " Discount Rate Testing " + "*" * 5)
     print("")
-    discount_rates = np.logspace(-0.2, 0, num=30)
-    pi_times = np.zeros(30)
-    vi_times = np.zeros(30)
+
+    discount_rates = np.tile(np.logspace(-0.2, 0, num=30), 10) # This is producing the repeated runs
+    pi_times = np.zeros(300)
+    vi_times = np.zeros(300)
+
     for i, gamma in enumerate(discount_rates):
         initial_state = env.reset()
 
@@ -322,16 +325,21 @@ def main():
         vi_end = timeit.default_timer()
         vi_times[i] = vi_end - vi_start
 
-        # print(f"{i}: $\gamma$ = {gamma} | s_i = {initial_state} | Policy Iteration Time = {pi_times[i]} s | Value Iteration Time = {vi_times[i]} s")
-
     df = pd.DataFrame(data={
         "Discount Factors": discount_rates,
-        "Policy Iteration": pi_times * 1000.,
-        "Value Iteration": vi_times * 1000.,
+        "Policy Iteration": pi_times,
+        "Value Iteration": vi_times,
     })
     print(df)
-    df = df.melt(id_vars="Discount Factors", var_name="Algorithms", value_name="Time (milliseconds)")
-    ax = sns.lineplot(data=df, x="Discount Factors", y="Time (milliseconds)", hue="Algorithms", dashes=False, style="Algorithms", markers=True, palette="Set2")
+    df = df.melt(id_vars="Discount Factors", var_name="Algorithms", value_name="Time (seconds)")
+    sns.set_style("whitegrid")
+    ax = sns.lineplot(
+        data=df, 
+        x="Discount Factors", y="Time (seconds)", hue="Algorithms", 
+        sort=True, estimator="mean", # Doing the average in seaborn because its too much effort lmao
+        dashes=False, style="Algorithms", markers=True, 
+        palette="Set2"
+    )
     ax.set_title("PI and VI runtimes over varying discount factors $\gamma$")
     plt.savefig("algorithm_runtimes.pdf")
 
