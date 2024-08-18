@@ -10,6 +10,8 @@ import numpy as np
 from environments.gridworld import GridworldEnv
 import timeit
 import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
 
 
 def policy_evaluation(env, policy, discount_factor=1.0, theta=0.00001):
@@ -297,6 +299,41 @@ def main():
                            -5., -4., -3., -2., -1.,
                            -4., -3., -2., -1., 0.])
     np.testing.assert_array_almost_equal(v, expected_v, decimal=1)
+
+
+    ## Graph Nonsense
+    print("")
+    print("")
+    print("*" * 5 + " Discount Rate Testing " + "*" * 5)
+    print("")
+    discount_rates = np.logspace(-0.2, 0, num=30)
+    pi_times = np.zeros(30)
+    vi_times = np.zeros(30)
+    for i, gamma in enumerate(discount_rates):
+        initial_state = env.reset()
+
+        pi_start = timeit.default_timer()
+        pi_policy, pi_value = policy_iteration(env, discount_factor=gamma)
+        pi_end = timeit.default_timer()
+        pi_times[i] = pi_end - pi_start
+
+        vi_start = timeit.default_timer()
+        vi_policy, vi_value = value_iteration(env, discount_factor=gamma)
+        vi_end = timeit.default_timer()
+        vi_times[i] = vi_end - vi_start
+
+        # print(f"{i}: $\gamma$ = {gamma} | s_i = {initial_state} | Policy Iteration Time = {pi_times[i]} s | Value Iteration Time = {vi_times[i]} s")
+
+    df = pd.DataFrame(data={
+        "Discount Factors": discount_rates,
+        "Policy Iteration": pi_times * 1000.,
+        "Value Iteration": vi_times * 1000.,
+    })
+    print(df)
+    df = df.melt(id_vars="Discount Factors", var_name="Algorithms", value_name="Time (milliseconds)")
+    ax = sns.lineplot(data=df, x="Discount Factors", y="Time (milliseconds)", hue="Algorithms", dashes=False, style="Algorithms", markers=True, palette="Set2")
+    ax.set_title("PI and VI runtimes over varying discount factors $\gamma$")
+    plt.savefig("algorithm_runtimes.pdf")
 
 
 if __name__ == "__main__":
