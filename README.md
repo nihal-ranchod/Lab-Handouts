@@ -8,6 +8,7 @@
 
 ### Lab 1: Dynamic Programming: [Lab 1 PDF](Lab_1-Handout.pdf)
 
+### Lab 2: Model Free Learning: [Lab 2 PDF](lab_2_handout.pdf)
 ## Dependencies
 ```bash
 pip install gym
