@@ -26,15 +26,17 @@ class DQN(nn.Module):
         ), "action_space must be of type Discrete"
 
         self.conv_block = nn.Sequential(
-            nn.Conv2d(observation_space.shape[2], 16, 8),
+            nn.Conv2d(observation_space.shape[2], 16, 7, padding=3),
             nn.ReLU(),
+            nn.AvgPool2d(3,2,padding=1),
             
-            nn.Conv2d(16, 32, 4),
-            nn.ReLU()
+            nn.Conv2d(16, 32, 5, padding=2),
+            nn.ReLU(),
+            nn.AvgPool2d(3,2,padding=1),
         )
         
         self.mlp_block = nn.Sequential(
-            nn.Linear(10, 256),
+            nn.Linear(14112, 256),
             nn.ReLU(),
             nn.Linear(256, action_space.n)
         )
@@ -42,8 +44,7 @@ class DQN(nn.Module):
 
     def forward(self, x):
         # TODO Implement forward pass
-        print(x.shape)
         conv_output = self.conv_block(x)
-        print(conv_output.shape)
-        mlp_output = self.mlp_block(conv_output)
+        conv_output_linear = conv_output.reshape((-1,))
+        mlp_output = self.mlp_block(conv_output_linear)
         return mlp_output

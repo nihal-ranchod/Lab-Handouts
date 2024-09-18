@@ -79,5 +79,5 @@ class DQNAgent:
         # TODO Select action greedily from the Q-network given the state
         self.network.eval()
         state_quality = self.network(torch.Tensor(state).permute(2,1,0)).detach()
-        print(state_quality.shape)
+        return torch.argmax(state_quality)
         
