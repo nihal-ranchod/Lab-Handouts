@@ -25,9 +25,25 @@ class DQN(nn.Module):
             type(action_space) == spaces.Discrete
         ), "action_space must be of type Discrete"
 
-        # TODO Implement DQN Network
-        raise NotImplementedError
+        self.conv_block = nn.Sequential(
+            nn.Conv2d(observation_space.shape[2], 16, 8),
+            nn.ReLU(),
+            
+            nn.Conv2d(16, 32, 4),
+            nn.ReLU()
+        )
+        
+        self.mlp_block = nn.Sequential(
+            nn.Linear(10, 256),
+            nn.ReLU(),
+            nn.Linear(256, action_space.n)
+        )
+
 
     def forward(self, x):
         # TODO Implement forward pass
-        raise NotImplementedError
+        print(x.shape)
+        conv_output = self.conv_block(x)
+        print(conv_output.shape)
+        mlp_output = self.mlp_block(conv_output)
+        return mlp_output
