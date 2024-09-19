@@ -70,6 +70,7 @@ if __name__ == "__main__":
         # add state, action, reward, next_state, float(done) to reply memory - cast done to float
         # add reward to episode_reward
 
+        # POSSIBLE SOLUTION
         # if random.random() < eps_threshold:
         #     action = env.action_space.sample()
         # else:
