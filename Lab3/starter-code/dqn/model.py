@@ -41,10 +41,13 @@ class DQN(nn.Module):
             nn.Linear(256, action_space.n)
         )
 
-
-    def forward(self, x):
+    # take in state, return action values as an array
+    def forward(self, state):
         # TODO Implement forward pass
-        conv_output = self.conv_block(x)
-        conv_output_linear = conv_output.reshape((-1,))
+        conv_output = self.conv_block(state)
+        if len(conv_output.shape) == 4:
+            conv_output_linear = conv_output.reshape((conv_output.shape[0],-1,))
+        else:
+            conv_output_linear = conv_output.reshape((-1,))
         mlp_output = self.mlp_block(conv_output_linear)
         return mlp_output

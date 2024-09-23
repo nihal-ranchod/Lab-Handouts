@@ -16,7 +16,8 @@ if __name__ == "__main__":
         "discount-factor": 0.99,  # discount factor
         "num-steps": int(1e6),  # total number of steps to run the environment for
         "batch-size": 256,  # number of transitions to optimize at the same time
-        "learning-starts": 10000,  # number of steps before learning starts
+        # "learning-starts": 10000,  # number of steps before learning starts
+        "learning-starts": 5,
         "learning-freq": 5,  # number of iterations between every optimization step
         "use-double-dqn": True,  # use double deep Q-learning
         "target-update-freq": 1000,  # number of iterations between every target network update
@@ -46,7 +47,7 @@ if __name__ == "__main__":
     # TODO Create dqn agent
     agent = DQNAgent(env.observation_space, 
                      env.action_space, 
-                     ReplayBuffer(hyper_params["replay-buffer-size"]), 
+                     replay_buffer, 
                      hyper_params["use-double-dqn"], 
                      hyper_params["learning-rate"],
                      hyper_params["batch-size"],
@@ -71,14 +72,14 @@ if __name__ == "__main__":
         # add reward to episode_reward
 
         # POSSIBLE SOLUTION
-        # if random.random() < eps_threshold:
-        #     action = env.action_space.sample()
-        # else:
-        #     action = agent.act(state)
+        if random.random() < eps_threshold:
+            action = env.action_space.sample()
+        else:
+            action = agent.act(state)
 
-        # next_state, reward, done, _ = env.step(action)
-        # replay_buffer.add(state, action, reward, next_state, float(done))
-        #state = next_state
+        next_state, reward, done, _ = env.step(action)
+        replay_buffer.add(state, action, reward, next_state, float(done))
+        state = next_state
 
         episode_rewards[-1] += reward
         if done:

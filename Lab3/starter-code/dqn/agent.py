@@ -53,15 +53,33 @@ class DQNAgent:
         #   return loss
     
         self.network.train()
-    
+
         minibatch = self.replay_buffer.sample(self.batch_size)
-        batch_states, batch_actions, batch_rewards, batch_next_state, batch_done = minibatch
-        batch_states = torch.Tensor(batch_states, device=device)
-        batch_actions = torch.Tensor(batch_actions, device=device)
+        batch_states, batch_actions, batch_rewards, batch_next_states, batch_done = minibatch
+        batch_states = torch.Tensor(np.swapaxes(batch_states, 1, 3), device=device)
+        batch_actions = torch.Tensor(batch_actions, device=device).int()
         batch_rewards = torch.Tensor(batch_rewards, device=device)
-        batch_next_states = torch.Tensor(batch_next_states, device=device)
+        batch_next_states = torch.Tensor(np.swapaxes(batch_next_states, 1, 3), device=device)
         batch_done = torch.Tensor(batch_done, device=device).float()
-        
+
+        print("State shape:", batch_states.shape)
+        print("Reward:", batch_rewards.shape)
+        print("Batch Returns:", batch_rewards.sum())
+        print("Batch Actions shape:", batch_actions.shape)
+        print("Example action type:", batch_actions.dtype)
+
+        batch_targets = batch_rewards + self.gamma * torch.max(self.target_network(batch_next_states), dim=1).values
+        batch_qvals = torch.gather(self.network(batch_states), 1, batch_actions.unsqueeze(1)).squeeze(1)
+       
+        print("Batch qval example:", batch_qvals[0])
+        print("Batch action example:", batch_actions[0])
+        # print("Batch qval action example:", batch_qvals[0, batch_actions[0]])
+
+        print("Batch Targets shape:", batch_targets.shape)
+        print("Batch Qvals shape:", batch_qvals.shape)
+
+        batch_loss = (batch_targets - batch_qvals)**2
+        print("Batch Loss:", batch_loss.sum())
 
     def update_target_network(self):
         """
