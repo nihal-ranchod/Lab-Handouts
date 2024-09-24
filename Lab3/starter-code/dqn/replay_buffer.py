@@ -45,6 +45,7 @@ class ReplayBuffer:
             rewards.append(reward)
             next_states.append(np.array(next_state, copy=False))
             dones.append(done)
+
         return (
             np.array(states),
             np.array(actions),

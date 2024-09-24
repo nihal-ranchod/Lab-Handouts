@@ -157,7 +157,6 @@ class WarpFrame(gym.ObservationWrapper):
         )
 
     def observation(self, frame):
-        frame = np.moveaxis(frame, 0, 2)
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         frame = cv2.resize(
             frame, (self.width, self.height), interpolation=cv2.INTER_AREA

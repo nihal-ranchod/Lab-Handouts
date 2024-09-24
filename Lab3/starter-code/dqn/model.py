@@ -26,7 +26,7 @@ class DQN(nn.Module):
         ), "action_space must be of type Discrete"
 
         self.conv_block = nn.Sequential(
-            nn.Conv2d(observation_space.shape[2], 16, 7, padding=3),
+            nn.Conv2d(observation_space.shape[0], 16, 7, padding=3),
             nn.ReLU(),
             nn.AvgPool2d(3,2,padding=1),
             
@@ -43,7 +43,7 @@ class DQN(nn.Module):
 
     # take in state, return action values as an array
     def forward(self, state):
-        # TODO Implement forward pass
+        # TODO Implement forward pass - DONE
         conv_output = self.conv_block(state)
         if len(conv_output.shape) == 4:
             conv_output_linear = conv_output.reshape((conv_output.shape[0],-1,))

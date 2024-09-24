@@ -5,8 +5,7 @@ import numpy as np
 from dqn.model import DQN
 from dqn.replay_buffer import ReplayBuffer
 
-device = "cpu"
-
+device = ("cuda" if torch.cuda.is_available() else "cpu")
 
 class DQNAgent:
     def __init__(
@@ -46,7 +45,7 @@ class DQNAgent:
         Optimise the TD-error over a single minibatch of transitions
         :return: the loss
         """
-        # TODO
+        # TODO - DONE
         #   Optimise the TD-error over a single minibatch of transitions
         #   Sample the minibatch from the replay-memory
         #   using done (as a float) instead of if statement
@@ -56,30 +55,23 @@ class DQNAgent:
 
         minibatch = self.replay_buffer.sample(self.batch_size)
         batch_states, batch_actions, batch_rewards, batch_next_states, batch_done = minibatch
-        batch_states = torch.Tensor(np.swapaxes(batch_states, 1, 3), device=device)
-        batch_actions = torch.Tensor(batch_actions, device=device).int()
-        batch_rewards = torch.Tensor(batch_rewards, device=device)
-        batch_next_states = torch.Tensor(np.swapaxes(batch_next_states, 1, 3), device=device)
-        batch_done = torch.Tensor(batch_done, device=device).float()
+        batch_states = torch.Tensor(batch_states).to(device)
+        batch_actions = torch.Tensor(batch_actions).to(device=device, dtype=torch.int64)
+        batch_rewards = torch.Tensor(batch_rewards).to(device)
+        batch_next_states = torch.Tensor(batch_next_states).to(device)
+        batch_done = torch.Tensor(batch_done).to(device).float()
 
-        print("State shape:", batch_states.shape)
-        print("Reward:", batch_rewards.shape)
-        print("Batch Returns:", batch_rewards.sum())
-        print("Batch Actions shape:", batch_actions.shape)
-        print("Example action type:", batch_actions.dtype)
-
-        batch_targets = batch_rewards + self.gamma * torch.max(self.target_network(batch_next_states), dim=1).values
+        batch_targets = batch_rewards + (1. - batch_done) * self.gamma * torch.max(self.target_network(batch_next_states), dim=1).values
         batch_qvals = torch.gather(self.network(batch_states), 1, batch_actions.unsqueeze(1)).squeeze(1)
        
-        print("Batch qval example:", batch_qvals[0])
-        print("Batch action example:", batch_actions[0])
-        # print("Batch qval action example:", batch_qvals[0, batch_actions[0]])
-
-        print("Batch Targets shape:", batch_targets.shape)
-        print("Batch Qvals shape:", batch_qvals.shape)
-
         batch_loss = (batch_targets - batch_qvals)**2
-        print("Batch Loss:", batch_loss.sum())
+        total_batch_loss = batch_loss.sum()
+
+        total_batch_loss.backward()
+        self.optimiser.step()
+        self.optimiser.zero_grad()
+
+        return total_batch_loss
 
     def update_target_network(self):
         """
@@ -94,8 +86,10 @@ class DQNAgent:
         :param state: the current state
         :return: the action to take
         """
-        # TODO Select action greedily from the Q-network given the state
+        # TODO Select action greedily from the Q-network given the state - DONE
         self.network.eval()
-        state_quality = self.network(torch.Tensor(state).permute(2,1,0)).detach()
-        return torch.argmax(state_quality)
+        state = np.array(state)
+        state = torch.Tensor(state).to(device)
+        state_quality = self.network(state).detach()
+        return torch.argmax(state_quality).cpu()
         
