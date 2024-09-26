@@ -34,10 +34,11 @@ class DQNAgent:
         self.update_target_network()
         
         self.optimiser = torch.optim.Adam(self.network.parameters(), lr=lr)
+        self.loss_fn = torch.nn.MSELoss()
         self.replay_buffer = replay_buffer
         self.batch_size = batch_size
         self.gamma = gamma
-        
+
         self.target_network.eval()
 
     def optimise_td_loss(self):
@@ -64,14 +65,13 @@ class DQNAgent:
         batch_targets = batch_rewards + (1. - batch_done) * self.gamma * torch.max(self.target_network(batch_next_states), dim=1).values
         batch_qvals = torch.gather(self.network(batch_states), 1, batch_actions.unsqueeze(1)).squeeze(1)
        
-        batch_loss = (batch_targets - batch_qvals)**2
-        total_batch_loss = batch_loss.sum()
+        loss = self.loss_fn(batch_qvals, batch_targets)
+        loss.backward()
 
-        total_batch_loss.backward()
         self.optimiser.step()
         self.optimiser.zero_grad()
 
-        return total_batch_loss
+        return loss
 
     def update_target_network(self):
         """
@@ -89,7 +89,7 @@ class DQNAgent:
         # TODO Select action greedily from the Q-network given the state - DONE
         self.network.eval()
         state = np.array(state)
-        state = torch.Tensor(state).to(device)
+        state = torch.Tensor(state).to(device).reshape((1, 4, 84, 84)) # network expects a batch, but we are passin in only the one state 
         state_quality = self.network(state).detach()
         return torch.argmax(state_quality).cpu()
         

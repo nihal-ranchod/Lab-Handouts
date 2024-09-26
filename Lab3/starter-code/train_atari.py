@@ -17,8 +17,9 @@ if __name__ == "__main__":
         "learning-rate": 1e-4,  # learning rate for Adam optimizer
         "discount-factor": 0.99,  # discount factor
         "num-steps": int(1e6),  # total number of steps to run the environment for
+        # "num-steps": 100000,
         "batch-size": 256,  # number of transitions to optimize at the same time
-        "learning-starts": 10000,  # number of steps before learning starts
+        "learning-starts": 256,  # number of steps before learning starts
         "learning-freq": 5,  # number of iterations between every optimization step
         "use-double-dqn": True,  # use double deep Q-learning
         "target-update-freq": 1000,  # number of iterations between every target network update
